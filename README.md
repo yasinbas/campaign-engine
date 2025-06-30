@@ -56,7 +56,7 @@ Bash
 
 git clone https://github.com/yasinbas/campaign-engine.git
 cd campaign-engine
-(Remember to replace KULLANICI_ADIN with your actual GitHub username.)
+
 
 Start the PostgreSQL Database:
 The easiest way to get a database instance running is by using Docker. Run the following command in your terminal:
