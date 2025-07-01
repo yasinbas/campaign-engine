@@ -12,4 +12,6 @@ public enum CampaignType {
 
     // Koşullu
     TRIGGER_PRODUCT_GET_DISCOUNT
+
+
 }

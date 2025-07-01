@@ -33,7 +33,7 @@ public class DataInitializer implements CommandLineRunner {
             campaign1.setName("Gazozlarda 3 Al 2 Öde");
             campaign1.setDescription("Tüm gazlı içeceklerde geçerli efsane kampanya.");
             campaign1.setCampaignType(CampaignType.BUY_X_PAY_Y);
-            campaign1.setDetails("{ \"product_category\": \"gazli-icecek\", \"buyQuantity\": 3, \"payQuantity\": 2 }");
+            campaign1.setDetails("{ \"productId\": \"GAZOZ-123\", \"buyQuantity\": 3, \"payQuantity\": 2 }");
             campaign1.setStartDate(LocalDateTime.now());
             campaign1.setEndDate(LocalDateTime.now().plusMonths(1));
             campaign1.setActive(true);

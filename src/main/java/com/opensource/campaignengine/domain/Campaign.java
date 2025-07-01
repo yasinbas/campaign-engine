@@ -38,4 +38,10 @@ public class Campaign {
     private boolean active = true;
 
     private int priority;
+
+    @Column(length = 50)
+    private String externalCode1;
+
+    @Column(length = 50)
+    private String externalCode2;
 }
