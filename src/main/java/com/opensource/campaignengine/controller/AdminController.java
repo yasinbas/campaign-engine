@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.validation.BindingResult;
+import jakarta.validation.Valid;
 
 @Controller
 @RequestMapping("/admin/campaigns")
@@ -39,9 +42,34 @@ public class AdminController {
 
 
     @PostMapping
-    public String saveCampaign(@ModelAttribute("campaign") Campaign campaign) {
+    public String saveCampaign(@Valid @ModelAttribute("campaign") Campaign campaign, BindingResult bindingResult, Model model) {
+        // Eğer validasyon hataları varsa
+        if (bindingResult.hasErrors()) {
+
+            model.addAttribute("campaignTypes", CampaignType.values());
+
+            return "campaign-form";
+        }
+
         campaignRepository.save(campaign);
-        return "redirect:/admin/campaigns"; // Kaydettikten sonra kampanya listesi sayfasına yönlendir
+        return "redirect:/admin/campaigns";
+    }
+
+    @PostMapping("/delete/{id}")
+    public String deleteCampaign(@PathVariable("id") Long id) {
+        campaignRepository.deleteById(id);
+        return "redirect:/admin/campaigns";
+    }
+
+    @GetMapping("/edit/{id}")
+    public String showEditCampaignForm(@PathVariable("id") Long id, Model model) {
+        // ID'si verilen kampanyayı veritabanında bul. Bulamazsan hata fırlat.
+        Campaign campaign = campaignRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Geçersiz Kampanya Id:" + id));
+
+        model.addAttribute("campaign", campaign);
+        model.addAttribute("campaignTypes", CampaignType.values());
+        return "campaign-form"; // Aynı formu tekrar kullanıyoruz!
     }
 
 }

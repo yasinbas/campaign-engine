@@ -10,7 +10,7 @@ public enum CampaignType {
     BASKET_TOTAL_PERCENTAGE_DISCOUNT,
     BASKET_TOTAL_FIXED_DISCOUNT,
 
-    // Koşullu
+    BUY_A_GET_B_DISCOUNT, // Koşullu
     TRIGGER_PRODUCT_GET_DISCOUNT
 
 

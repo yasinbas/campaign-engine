@@ -1,0 +1,138 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > CampaignController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.opensource.campaignengine.controller</a>
+</div>
+
+<h1>Coverage Summary for Class: CampaignController (com.opensource.campaignengine.controller)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">CampaignController</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/4)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.opensource.campaignengine.controller;
+&nbsp;
+&nbsp;import com.opensource.campaignengine.domain.Campaign;
+&nbsp;import com.opensource.campaignengine.dto.CartDTO; // EKLENDİ
+&nbsp;import com.opensource.campaignengine.dto.EvaluationResultDTO; // EKLENDİ
+&nbsp;import com.opensource.campaignengine.service.CampaignService;
+&nbsp;import io.swagger.v3.oas.annotations.Operation;
+&nbsp;import org.springframework.web.bind.annotation.*; // EKLENDİ
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;@RestController
+&nbsp;@RequestMapping(&quot;/api/v1/campaigns&quot;)
+&nbsp;public class CampaignController {
+&nbsp;
+&nbsp;    private final CampaignService campaignService;
+&nbsp;
+<b class="nc">&nbsp;    public CampaignController(CampaignService campaignService) {</b>
+<b class="nc">&nbsp;        this.campaignService = campaignService;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;Tüm Aktif Kampanyaları Listeler&quot;,
+&nbsp;            description = &quot;Veritabanında &#39;active&#39; bayrağı true olan tüm kampanyaları getirir.&quot;)
+&nbsp;    @GetMapping(&quot;/active&quot;)
+&nbsp;    public List&lt;Campaign&gt; getActiveCampaigns() {
+<b class="nc">&nbsp;        return campaignService.findAllActiveCampaigns();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // YENİ EKLENEN ENDPOINT
+&nbsp;    @PostMapping(&quot;/evaluate&quot;)
+&nbsp;    public EvaluationResultDTO evaluateCart(@RequestBody CartDTO cart) {
+<b class="nc">&nbsp;        return campaignService.evaluateCart(cart);</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-07-01 15:17</div>
+</div>
+</body>
+</html>

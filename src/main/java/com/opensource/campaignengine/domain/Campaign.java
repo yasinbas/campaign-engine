@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDateTime;
 
@@ -18,6 +19,7 @@ public class Campaign {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Kampanya adı boş bırakılamaz")
     @Column(nullable = false)
     private String name;
 
@@ -27,6 +29,7 @@ public class Campaign {
     @Column(nullable = false)
     private CampaignType campaignType;
 
+    @NotBlank(message = "Detaylar alanı boş bırakılamaz ve geçerli bir JSON içermelidir")
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String details;
