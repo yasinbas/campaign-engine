@@ -12,9 +12,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.validation.BindingResult;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Controller
 @RequestMapping("/admin/campaigns")
+@PreAuthorize("hasRole('ADMIN') or hasRole('CAMPAIGN_MANAGER')")
 public class AdminController {
 
     private final CampaignRepository campaignRepository;
@@ -69,7 +71,7 @@ public class AdminController {
 
         model.addAttribute("campaign", campaign);
         model.addAttribute("campaignTypes", CampaignType.values());
-        return "campaign-form"; // Aynı formu tekrar kullanıyoruz!
+        return "campaign-form";
     }
 
 }

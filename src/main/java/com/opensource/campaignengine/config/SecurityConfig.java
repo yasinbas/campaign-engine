@@ -7,9 +7,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import static org.springframework.security.config.Customizer.withDefaults;
 
+
+@EnableMethodSecurity
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -28,12 +30,18 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // "/admin/" ile başlayan tüm adresler için kimlik doğrulaması iste
-                        .requestMatchers("/admin/**").hasRole("ADMIN") // Sadece ADMIN rolü olanlar erişebilir!
-                        // Geriye kalan tüm adreslere herkesin erişmesine izin ver
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
-                .formLogin(withDefaults());
+                // Giriş formu ayarı aynı kalıyor
+                .formLogin(withDefaults())
+                // YENİ EKLENEN KISIM: Çıkış ayarları
+                .logout(logout -> logout
+                        // Çıkış işlemi başarılı olduğunda yönlendirilecek sayfa
+                        .logoutSuccessUrl("/login?logout")
+                        // Herkesin çıkış yapabilmesine izin ver
+                        .permitAll()
+                );
         return http.build();
     }
 
