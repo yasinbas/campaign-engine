@@ -22,6 +22,7 @@
             <th>Kategori</th>
             <th>Fiyat</th>
             <th>Stok</th>
+            <th>Durum</th>
             <th>İşlemler</th>
         </tr>
         </thead>
@@ -29,17 +30,19 @@
         <tr th:each="product : ${products}">
             <td th:text="${product.id}">1</td>
             <td th:text="${product.sku}">SKU-001</td>
-            <td th:text="${product.name}">Ürün Adı</td>
+            <td th:text="${product.name}">Test Ürünü</td>
             <td th:text="${product.category} ? ${product.category.name} : '-'">Kategori</td>
-            <td th:text="${#numbers.formatCurrency(product.price)}">10.00 ₺</td>
-            <td th:text="${product.stockQuantity}">100</td>
+            <td th:text="${#numbers.formatCurrency(product.price)}">250.00 ₺</td>
+            <td th:text="${product.stockQuantity}">25</td>
             <td>
+                <span th:if="${product.active}" class="badge bg-success">Aktif</span>
+                <span th:unless="${product.active}" class="badge bg-secondary">Pasif</span>
+            </td>
             <td>
                 <a th:href="@{/admin/products/edit/{id}(id=${product.id})}" class="btn btn-warning btn-sm">Düzenle</a>
                 <form th:action="@{/admin/products/delete/{id}(id=${product.id})}" method="post" onsubmit="return confirm('Bu ürünü silmek istediğinizden emin misiniz?');" style="display:inline;">
                     <button type="submit" class="btn btn-danger btn-sm">Sil</button>
                 </form>
-            </td>
             </td>
         </tr>
         </tbody>

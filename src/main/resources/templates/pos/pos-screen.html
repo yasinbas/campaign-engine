@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>POS Simülasyonu</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <style>
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; }
+        .product-card { cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="container-fluid mt-3">
+    <div class="row">
+        <div class="col-md-8">
+            <h3>Ürünler</h3>
+            <hr>
+            <div class="product-grid" id="product-grid">
+                <div th:each="product : ${products}" class="card text-center product-card"
+                     th:data-id="${product.sku}"
+                     th:data-name="${product.name}"
+                     th:data-price="${product.price}"
+                     th:data-sale-type="${product.saleType}">
+                    <div class="card-body">
+                        <h5 class="card-title fs-6" th:text="${product.name}">Ürün Adı</h5>
+                        <p class="card-text small" th:text="${#numbers.formatCurrency(product.price)}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 bg-light p-3">
+            <h3>Alışveriş Sepeti</h3>
+            <hr>
+            <ul class="list-group" id="cart-items">
+            </ul>
+            <hr>
+            <div>
+                <p><strong>Ara Toplam:</strong> <span id="original-total">0.00 ₺</span></p>
+                <div id="discounts-applied" class="text-danger">
+                </div>
+                <h4><strong>Genel Toplam:</strong> <span id="final-total">0.00 ₺</span></h4>
+            </div>
+            <div class="d-grid gap-2 mt-3">
+                <button class="btn btn-success" id="evaluate-button">İndirimleri Uygula</button>
+                <button class="btn btn-danger" id="clear-cart-button">Sepeti Temizle</button>
+                <a th:href="@{/admin/campaigns}" class="btn btn-outline-secondary">Yönetim Paneline Dön</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // Bu script, sayfa içindeki tüm interaktifliği yönetir.
+
+    // Uygulama durumu (State)
+    let cart = []; // Alışveriş sepetimiz
+    const csrfToken = /*[[${_csrf.token}]]*/ null;
+    const csrfHeaderName = /*[[${_csrf.headerName}]]*/ null;
+
+
+    // Element referansları
+    const productGrid = document.getElementById('product-grid');
+    const cartItemsUl = document.getElementById('cart-items');
+    const originalTotalSpan = document.getElementById('original-total');
+    const finalTotalSpan = document.getElementById('final-total');
+    const discountsAppliedDiv = document.getElementById('discounts-applied');
+    const evaluateButton = document.getElementById('evaluate-button');
+    const clearCartButton = document.getElementById('clear-cart-button');
+
+    // ---- Fonksiyonlar ----
+
+    // Sepeti her değiştiğinde ekranı yeniden çizen ana fonksiyon
+    function renderCart() {
+        cartItemsUl.innerHTML = ''; // Listeyi temizle
+        let originalTotal = 0;
+
+        cart.forEach(item => {
+            const itemTotal = item.unitPrice * item.quantity;
+            originalTotal += itemTotal;
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            const saleUnit = item.saleType === 'BY_WEIGHT' ? 'kg' : 'adet';
+            li.innerHTML = `
+                ${item.name}
+                <span class="badge bg-primary rounded-pill">${item.quantity} ${saleUnit} x ${item.unitPrice.toFixed(2)} ₺</span>
+            `;
+            cartItemsUl.appendChild(li);
+        });
+
+        originalTotalSpan.textContent = `${originalTotal.toFixed(2)} ₺`;
+        finalTotalSpan.textContent = `${originalTotal.toFixed(2)} ₺`; // Başlangıçta ikisi de aynı
+        discountsAppliedDiv.innerHTML = ''; // İndirimleri temizle
+    }
+
+    // Sepete adetli ürün ekler
+    function addToCartByUnit(product) {
+        const existingItem = cart.find(item => item.productId === product.id);
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            cart.push({
+                productId: product.id,
+                name: product.name,
+                quantity: 1,
+                unitPrice: product.price,
+                saleType: product.saleType
+            });
+        }
+        renderCart();
+    }
+
+    // Sepete ağırlıklı ürün ekler
+    function addToCartByWeight(product) {
+        const weight = prompt(`Lütfen "${product.name}" için ağırlığı girin (kg):`, "1.0");
+        if (weight && !isNaN(parseFloat(weight)) && parseFloat(weight) > 0) {
+            const quantity = parseFloat(weight);
+            // Ağırlıklı ürün her seferinde yeni bir satır olarak eklenir
+            cart.push({
+                productId: product.id,
+                name: product.name,
+                quantity: quantity,
+                unitPrice: product.price,
+                saleType: product.saleType
+            });
+            renderCart();
+        } else {
+            alert("Lütfen geçerli bir ağırlık girin.");
+        }
+    }
+
+    // Sepeti API'ye gönderip indirimleri hesaplatır
+    async function evaluateCart() {
+        if (cart.length === 0) {
+            alert("Lütfen önce sepete ürün ekleyin.");
+            return;
+        }
+
+        const cartDTO = { items: cart };
+
+        try {
+            const response = await fetch('/api/v1/campaigns/evaluate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeaderName]: csrfToken
+                },
+                body: JSON.stringify(cartDTO)
+            });
+
+            if (!response.ok) {
+                throw new Error('API isteği başarısız oldu!');
+            }
+
+            const result = await response.json();
+
+            // Sonuçları ekrana yansıt
+            finalTotalSpan.textContent = `${result.finalTotal.toFixed(2)} ₺`;
+            discountsAppliedDiv.innerHTML = '';
+            if(result.appliedDiscounts && result.appliedDiscounts.length > 0) {
+                result.appliedDiscounts.forEach(discount => {
+                    const p = document.createElement('p');
+                    p.className = 'small mb-0';
+                    p.textContent = `${discount.campaignName}: -${discount.discountAmount.toFixed(2)} ₺`;
+                    discountsAppliedDiv.appendChild(p);
+                });
+            }
+
+        } catch (error) {
+            console.error('Değerlendirme hatası:', error);
+            alert('İndirimler hesaplanırken bir hata oluştu.');
+        }
+    }
+
+    // Sepeti temizler
+    function clearCart() {
+        cart = [];
+        renderCart();
+    }
+
+    // ---- Olay Dinleyiciler (Event Listeners) ----
+
+    // Ürün kartlarına tıklama olayı
+    productGrid.addEventListener('click', (e) => {
+        const card = e.target.closest('.product-card');
+        if (!card) return;
+
+        const product = {
+            id: card.dataset.id,
+            name: card.dataset.name,
+            price: parseFloat(card.dataset.price),
+            saleType: card.dataset.saleType
+        };
+
+        if (product.saleType === 'BY_WEIGHT') {
+            addToCartByWeight(product);
+        } else {
+            addToCartByUnit(product);
+        }
+    });
+
+    // Butonlara tıklama olayları
+    evaluateButton.addEventListener('click', evaluateCart);
+    clearCartButton.addEventListener('click', clearCart);
+
+</script>
+</body>
+</html>

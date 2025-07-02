@@ -1,6 +1,7 @@
 package com.opensource.campaignengine.domain;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "products")
-@EntityListeners(AuditingEntityListener.class) // Otomatik tarih takibi için
+@EntityListeners(AuditingEntityListener.class)
 public class Product {
 
     @Id
@@ -22,43 +23,43 @@ public class Product {
     private Long id;
 
     @Column(nullable = false)
-    private String name; // Ürün Adı
+    private String name;
 
     @Column(columnDefinition = "TEXT")
-    private String description; // Uzun ürün açıklaması
+    private String description;
 
     @Column(nullable = false, unique = true)
-    private String sku; // Stok Takip Kodu (Stock Keeping Unit), benzersiz olmalı
+    private String sku;
 
     @Column(unique = true)
-    private String barcode; // EAN/UPC barkod numarası
+    private String barcode;
 
     @Column(nullable = false)
-    private BigDecimal price; // Fiyat (Hatasız hesaplama için BigDecimal)
+    private BigDecimal price;
 
     @Column(nullable = false)
-    private Integer stockQuantity; // Stok Miktarı
+    private Integer stockQuantity;
 
     @Column(nullable = false)
-    private BigDecimal vatRate; // KDV Oranı (Örn: 18.00, 8.00)
+    private BigDecimal vatRate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ProductSaleType saleType; // Satış Tipi (Adet, Kg, Lt)
+    private ProductSaleType saleType;
 
-    private boolean taxFree = false; // Tax Free'ye uygun mu?
+    private boolean taxFree = false;
 
-    private boolean isActive = true; // Ürün satışta mı?
+    private boolean active = true;
 
+    @NotNull(message = "Lütfen bir kategori seçiniz")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
-    private Category category; // Ürünün kategorisi
+    private Category category;
 
-    // --- Denetim Alanları ---
     @CreatedDate
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt; // Oluşturulma Tarihi
+    private LocalDateTime createdAt;
 
     @LastModifiedDate
-    private LocalDateTime updatedAt; // Son Güncellenme Tarihi
+    private LocalDateTime updatedAt;
 }

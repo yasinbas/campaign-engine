@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -29,55 +30,43 @@ public class CampaignService {
     }
 
     public List<Campaign> findAllActiveCampaigns() {
-        // Artık sadece o an geçerli olan kampanyaları getiriyoruz.
         return campaignRepository.findAllByActiveTrueAndStartDateBeforeAndEndDateAfter(LocalDateTime.now(), LocalDateTime.now());
     }
 
     public EvaluationResultDTO evaluateCart(CartDTO cart) {
-        // 1. Tarihe göre geçerli ve aktif kampanyaları al
         List<Campaign> applicableCampaigns = this.findAllActiveCampaigns();
-
-        // 2. Kampanyaları öncelik sırasına göre (yüksek olan önce) sırala
         applicableCampaigns.sort(Comparator.comparingInt(Campaign::getPriority).reversed());
 
-        // 3. Sepet toplamlarını ve indirim listesini hazırla
+        // 1. Orijinal Toplamı BigDecimal uyumlu şekilde hesapla
         BigDecimal originalTotal = cart.getItems().stream()
-                .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .map(item -> item.getUnitPrice().multiply(item.getQuantity())) // DÜZELTİLDİ
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal finalTotal = new BigDecimal(originalTotal.toString());
         List<AppliedDiscountDTO> appliedDiscounts = new ArrayList<>();
-
-        // 4. Hangi ürünlerin zaten indirim aldığını takip etmek için bir set oluştur
         Set<String> discountedProductIds = new HashSet<>();
 
-        // 5. Her kampanyayı sıralı bir şekilde sepete uygula
         for (Campaign campaign : applicableCampaigns) {
             try {
                 JsonNode details = objectMapper.readTree(campaign.getDetails());
 
-                // --- KAMPANYA TİPİ: X AL Y ÖDE ---
+                // --- KAMPANYA TİPİ: X AL Y ÖDE (BigDecimal için yeniden yazıldı) ---
                 if (campaign.getCampaignType() == CampaignType.BUY_X_PAY_Y) {
                     String targetProductId = details.get("productId").asText();
 
-                    // Eğer bu ürün daha önce başka bir kampanyadan indirim almadıysa devam et
                     if (!discountedProductIds.contains(targetProductId)) {
-                        int buyQuantity = details.get("buyQuantity").asInt();
-                        int payQuantity = details.get("payQuantity").asInt();
+                        BigDecimal buyQuantity = new BigDecimal(details.get("buyQuantity").asText());
+                        BigDecimal payQuantity = new BigDecimal(details.get("payQuantity").asText());
 
-                        // Sepetteki ilgili ürünü bul ve koşulları kontrol et
                         cart.getItems().stream()
-                                .filter(item -> item.getProductId().equals(targetProductId) && item.getQuantity() >= buyQuantity)
+                                .filter(item -> item.getProductId().equals(targetProductId) && item.getQuantity().compareTo(buyQuantity) >= 0) // DÜZELTİLDİ: >= yerine .compareTo()
                                 .findFirst()
                                 .ifPresent(item -> {
-                                    int timesApplicable = item.getQuantity() / buyQuantity;
-                                    if (timesApplicable > 0) {
-                                        int freeItemsCount = (buyQuantity - payQuantity) * timesApplicable;
-                                        BigDecimal discountAmount = item.getUnitPrice().multiply(new BigDecimal(freeItemsCount));
+                                    BigDecimal timesApplicable = item.getQuantity().divide(buyQuantity, 0, RoundingMode.FLOOR); // DÜZELTİLDİ: / yerine .divide()
+                                    if (timesApplicable.compareTo(BigDecimal.ZERO) > 0) {
+                                        BigDecimal freeAmount = buyQuantity.subtract(payQuantity); // DÜZELTİLDİ: - yerine .subtract()
+                                        BigDecimal discountAmount = item.getUnitPrice().multiply(freeAmount).multiply(timesApplicable); // DÜZELTİLDİ: * yerine .multiply()
 
                                         appliedDiscounts.add(new AppliedDiscountDTO(campaign.getName(), discountAmount));
-
-                                        // Bu ürünü "indirim uygulandı" olarak işaretle ki başka kampanyadan etkilenmesin
                                         discountedProductIds.add(targetProductId);
                                     }
                                 });
@@ -93,20 +82,19 @@ public class CampaignService {
                         appliedDiscounts.add(new AppliedDiscountDTO(campaign.getName(), discountAmount));
                     }
                 }
+                // ... Diğer kampanya tipleri buraya eklenecek ...
 
             } catch (JsonProcessingException e) {
                 log.error("Kampanya JSON parse hatası: Campaign ID = {}", campaign.getId(), e);
             }
         }
 
-        // 6. Toplam indirim miktarını hesapla ve son tutarı bul
         BigDecimal totalDiscount = appliedDiscounts.stream()
                 .map(AppliedDiscountDTO::getDiscountAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        finalTotal = originalTotal.subtract(totalDiscount);
+        BigDecimal finalTotal = originalTotal.subtract(totalDiscount);
 
-        // 7. Sonucu oluştur ve geri dön
         EvaluationResultDTO result = new EvaluationResultDTO();
         result.setOriginalTotal(originalTotal);
         result.setFinalTotal(finalTotal);

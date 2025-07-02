@@ -8,6 +8,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid; // Validasyon için ekledik
+import org.springframework.validation.BindingResult;
+
 
 @Controller
 @RequestMapping("/admin/products")
@@ -51,7 +54,15 @@ public class ProductAdminController {
 
     // YENİ: Hem yeni ürün eklemeyi hem de güncellemeyi yönetir
     @PostMapping("/save")
-    public String saveProduct(@ModelAttribute("product") Product product) {
+    public String saveProduct(@Valid @ModelAttribute("product") Product product,
+                              BindingResult bindingResult, Model model) {
+        if (bindingResult.hasErrors()) {
+            // Hata varsa, formu tekrar gösterirken dropdown'ların dolması için
+            // gerekli verileri tekrar modele ekliyoruz.
+            model.addAttribute("allCategories", categoryRepository.findAll());
+            model.addAttribute("saleTypes", ProductSaleType.values());
+            return "admin/product-form";
+        }
         productService.save(product);
         return "redirect:/admin/products";
     }
