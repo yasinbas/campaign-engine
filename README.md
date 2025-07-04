@@ -12,6 +12,8 @@ Database-driven campaign management with PostgreSQL.
 
 Simple web-based Admin Panel for listing and creating new campaigns.
 
+**Campaign Analytics & Reporting** with usage tracking and performance insights.
+
 Auto-generated, interactive API documentation via SpringDoc (Swagger UI).
 
 Support for various campaign types, including:
@@ -118,12 +120,16 @@ Admin Panel URL: http://localhost:8080/admin/campaigns
 
 From here, you can view all campaigns in the system and add new ones using a web form.
 
+**Analytics Dashboard**: Visit `/admin/analytics` to view comprehensive campaign performance analytics including usage statistics, total discounts provided, and campaign effectiveness metrics.
+
 🗺️ Roadmap
 This project is under active development. Future enhancements include:
 
 [ ] Implementing more campaign types in the evaluation engine (e.g., BUY_X_PAY_Y).
 
 [ ] Adding "Edit" and "Delete" functionality to the Admin Panel.
+
+[x] **Campaign Analytics & Reporting** - Track campaign performance and usage patterns.
 
 [ ] Writing comprehensive unit and integration tests with JUnit, Mockito, and Testcontainers.
 
