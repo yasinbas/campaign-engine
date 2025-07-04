@@ -32,6 +32,9 @@ class CampaignServiceTest {
 
     @Mock
     private CampaignRepository campaignRepository;
+    
+    @Mock
+    private CampaignAnalyticsService analyticsService;
 
     @Mock
     private ObjectMapper objectMapper;

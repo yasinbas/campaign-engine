@@ -28,7 +28,8 @@ public class CampaignController {
 
     // YENİ EKLENEN ENDPOINT
     @PostMapping("/evaluate")
-    public EvaluationResultDTO evaluateCart(@RequestBody CartDTO cart) {
-        return campaignService.evaluateCart(cart);
+    public EvaluationResultDTO evaluateCart(@RequestBody CartDTO cart, 
+                                           @RequestParam(required = false) String transactionId) {
+        return campaignService.evaluateCart(cart, transactionId);
     }
 }

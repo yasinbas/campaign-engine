@@ -23,10 +23,13 @@ public class CampaignService {
 
     private final CampaignRepository campaignRepository;
     private final ObjectMapper objectMapper;
+    private final CampaignAnalyticsService analyticsService;
 
-    public CampaignService(CampaignRepository campaignRepository, ObjectMapper objectMapper) {
+    public CampaignService(CampaignRepository campaignRepository, ObjectMapper objectMapper, 
+                          CampaignAnalyticsService analyticsService) {
         this.campaignRepository = campaignRepository;
         this.objectMapper = objectMapper;
+        this.analyticsService = analyticsService;
     }
 
     public List<Campaign> findAllActiveCampaigns() {
@@ -34,6 +37,10 @@ public class CampaignService {
     }
 
     public EvaluationResultDTO evaluateCart(CartDTO cart) {
+        return evaluateCart(cart, null);
+    }
+
+    public EvaluationResultDTO evaluateCart(CartDTO cart, String transactionId) {
         List<Campaign> applicableCampaigns = this.findAllActiveCampaigns();
         applicableCampaigns.sort(Comparator.comparingInt(Campaign::getPriority).reversed());
 
@@ -48,6 +55,7 @@ public class CampaignService {
         for (Campaign campaign : applicableCampaigns) {
             try {
                 JsonNode details = objectMapper.readTree(campaign.getDetails());
+                BigDecimal campaignDiscountAmount = BigDecimal.ZERO;
 
                 // --- KAMPANYA TİPİ: X AL Y ÖDE (BigDecimal için yeniden yazıldı) ---
                 if (campaign.getCampaignType() == CampaignType.BUY_X_PAY_Y) {
@@ -68,6 +76,9 @@ public class CampaignService {
 
                                         appliedDiscounts.add(new AppliedDiscountDTO(campaign.getName(), discountAmount));
                                         discountedProductIds.add(targetProductId);
+                                        
+                                        // Record campaign usage for analytics
+                                        recordCampaignUsageAsync(campaign, originalTotal, discountAmount, transactionId);
                                     }
                                 });
                     }
@@ -80,6 +91,9 @@ public class CampaignService {
                         BigDecimal discountAmount = originalTotal.multiply(discountPercentage.divide(new BigDecimal("100")));
 
                         appliedDiscounts.add(new AppliedDiscountDTO(campaign.getName(), discountAmount));
+                        
+                        // Record campaign usage for analytics
+                        recordCampaignUsageAsync(campaign, originalTotal, discountAmount, transactionId);
                     }
                 }
                 // ... Diğer kampanya tipleri buraya eklenecek ...
@@ -100,5 +114,14 @@ public class CampaignService {
         result.setFinalTotal(finalTotal);
         result.setAppliedDiscounts(appliedDiscounts);
         return result;
+    }
+
+    private void recordCampaignUsageAsync(Campaign campaign, BigDecimal originalTotal, BigDecimal discountAmount, String transactionId) {
+        try {
+            BigDecimal finalTotal = originalTotal.subtract(discountAmount);
+            analyticsService.recordCampaignUsage(campaign, originalTotal, discountAmount, finalTotal, transactionId);
+        } catch (Exception e) {
+            log.warn("Failed to record campaign usage analytics for campaign {}: {}", campaign.getId(), e.getMessage());
+        }
     }
 }
