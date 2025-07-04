@@ -31,7 +31,7 @@ public class Campaign {
 
     @NotBlank(message = "Detaylar alanı boş bırakılamaz ve geçerli bir JSON içermelidir")
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "TEXT") // Changed from jsonb for H2 compatibility
     private String details;
 
     private LocalDateTime startDate;
