@@ -2,11 +2,11 @@ package com.opensource.campaignengine.controller;
 
 import com.opensource.campaignengine.domain.User;
 import com.opensource.campaignengine.domain.exception.ResourceNotFoundException;
+import com.opensource.campaignengine.service.RoleService;
 import com.opensource.campaignengine.service.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import com.opensource.campaignengine.repository.RoleRepository;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
@@ -18,12 +18,12 @@ import java.util.List;
 public class UserAdminController {
 
     private final UserService userService;
-    private final RoleRepository roleRepository;
+    private final RoleService roleService;
 
 
-    public UserAdminController(UserService userService, RoleRepository roleRepository) {
+    public UserAdminController(UserService userService, RoleService roleService) {
         this.userService = userService;
-        this.roleRepository = roleRepository;
+        this.roleService = roleService;
     }
 
     @GetMapping
@@ -39,7 +39,7 @@ public class UserAdminController {
                 .orElseThrow(() -> new ResourceNotFoundException("Bu ID ile kullanıcı bulunamadı: " + id));
 
         model.addAttribute("user", user);
-        model.addAttribute("allRoles", roleRepository.findAll());
+        model.addAttribute("allRoles", roleService.findAll());
         return "user-from";
     }
 

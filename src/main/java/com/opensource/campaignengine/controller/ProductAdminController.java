@@ -2,7 +2,7 @@ package com.opensource.campaignengine.controller;
 
 import com.opensource.campaignengine.domain.Product;
 import com.opensource.campaignengine.domain.ProductSaleType;
-import com.opensource.campaignengine.repository.CategoryRepository;
+import com.opensource.campaignengine.service.CategoryService;
 import com.opensource.campaignengine.service.ProductService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -18,11 +18,11 @@ import org.springframework.validation.BindingResult;
 public class ProductAdminController {
 
     private final ProductService productService;
-    private final CategoryRepository categoryRepository; // Kategori listesi için eklendi
+    private final CategoryService categoryService; // Kategori listesi için service eklendi
 
-    public ProductAdminController(ProductService productService, CategoryRepository categoryRepository) {
+    public ProductAdminController(ProductService productService, CategoryService categoryService) {
         this.productService = productService;
-        this.categoryRepository = categoryRepository;
+        this.categoryService = categoryService;
     }
 
     @GetMapping
@@ -36,7 +36,7 @@ public class ProductAdminController {
     public String showNewProductForm(Model model) {
         model.addAttribute("product", new Product());
         // Formdaki dropdown'lar için gerekli verileri modele ekliyoruz
-        model.addAttribute("allCategories", categoryRepository.findAll());
+        model.addAttribute("allCategories", categoryService.findAll());
         model.addAttribute("saleTypes", ProductSaleType.values());
         return "admin/product-form";
     }
@@ -47,7 +47,7 @@ public class ProductAdminController {
         Product product = productService.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Geçersiz Ürün Id:" + id));
         model.addAttribute("product", product);
-        model.addAttribute("allCategories", categoryRepository.findAll());
+        model.addAttribute("allCategories", categoryService.findAll());
         model.addAttribute("saleTypes", ProductSaleType.values());
         return "admin/product-form";
     }
@@ -59,7 +59,7 @@ public class ProductAdminController {
         if (bindingResult.hasErrors()) {
             // Hata varsa, formu tekrar gösterirken dropdown'ların dolması için
             // gerekli verileri tekrar modele ekliyoruz.
-            model.addAttribute("allCategories", categoryRepository.findAll());
+            model.addAttribute("allCategories", categoryService.findAll());
             model.addAttribute("saleTypes", ProductSaleType.values());
             return "admin/product-form";
         }

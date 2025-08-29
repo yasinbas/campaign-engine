@@ -2,11 +2,9 @@ package com.opensource.campaignengine.service;
 
 import com.opensource.campaignengine.domain.Role;
 import com.opensource.campaignengine.domain.User;
-import com.opensource.campaignengine.repository.RoleRepository;
 import com.opensource.campaignengine.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -15,11 +13,11 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository; // Rolleri bulmak için eklendi
+    private final RoleService roleService; // Rolleri bulmak için RoleService eklendi
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository) { // Constructor güncellendi
+    public UserService(UserRepository userRepository, RoleService roleService) { // Constructor güncellendi
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
+        this.roleService = roleService;
     }
 
     public List<User> findAllUsers() {
@@ -44,7 +42,7 @@ public class UserService {
         // Eğer formdan yeni rol ID'leri geldiyse
         if (roleIds != null && !roleIds.isEmpty()) {
             // Gelen ID'lere karşılık gelen Role nesnelerini veritabanından bul
-            List<Role> newRoles = roleRepository.findAllById(roleIds);
+            List<Role> newRoles = roleService.findAllByIds(roleIds);
             // Kullanıcının rolleri olarak bu yeni listeyi ata
             user.setRoles(new HashSet<>(newRoles));
         }
