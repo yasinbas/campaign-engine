@@ -2,31 +2,34 @@ package com.opensource.campaignengine.controller;
 
 import com.opensource.campaignengine.domain.Product;
 import com.opensource.campaignengine.domain.ProductSaleType;
-import com.opensource.campaignengine.repository.CategoryRepository;
+import com.opensource.campaignengine.service.CategoryService;
 import com.opensource.campaignengine.service.ProductService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid; // Validasyon için ekledik
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindingResult;
 
 
 @Controller
 @RequestMapping("/admin/products")
 @PreAuthorize("hasRole('ADMIN')") // Bu sayfaya sadece ADMIN rolü olanların erişebilmesini sağlıyoruz
+@Slf4j
 public class ProductAdminController {
 
     private final ProductService productService;
-    private final CategoryRepository categoryRepository; // Kategori listesi için eklendi
+    private final CategoryService categoryService; // Kategori listesi için service eklendi
 
-    public ProductAdminController(ProductService productService, CategoryRepository categoryRepository) {
+    public ProductAdminController(ProductService productService, CategoryService categoryService) {
         this.productService = productService;
-        this.categoryRepository = categoryRepository;
+        this.categoryService = categoryService;
     }
 
     @GetMapping
     public String listProducts(Model model) {
+        log.info("Listing all products");
         model.addAttribute("products", productService.findAll());
         return "admin/products";
     }
@@ -34,9 +37,10 @@ public class ProductAdminController {
     // YENİ: Yeni ürün ekleme formunu gösterir
     @GetMapping("/new")
     public String showNewProductForm(Model model) {
+        log.debug("Showing new product form");
         model.addAttribute("product", new Product());
         // Formdaki dropdown'lar için gerekli verileri modele ekliyoruz
-        model.addAttribute("allCategories", categoryRepository.findAll());
+        model.addAttribute("allCategories", categoryService.findAll());
         model.addAttribute("saleTypes", ProductSaleType.values());
         return "admin/product-form";
     }
@@ -44,10 +48,11 @@ public class ProductAdminController {
     // YENİ: Mevcut ürünü düzenleme formunu gösterir
     @GetMapping("/edit/{id}")
     public String showEditProductForm(@PathVariable Long id, Model model) {
+        log.debug("Editing product with id {}", id);
         Product product = productService.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Geçersiz Ürün Id:" + id));
         model.addAttribute("product", product);
-        model.addAttribute("allCategories", categoryRepository.findAll());
+        model.addAttribute("allCategories", categoryService.findAll());
         model.addAttribute("saleTypes", ProductSaleType.values());
         return "admin/product-form";
     }
@@ -59,11 +64,12 @@ public class ProductAdminController {
         if (bindingResult.hasErrors()) {
             // Hata varsa, formu tekrar gösterirken dropdown'ların dolması için
             // gerekli verileri tekrar modele ekliyoruz.
-            model.addAttribute("allCategories", categoryRepository.findAll());
+            model.addAttribute("allCategories", categoryService.findAll());
             model.addAttribute("saleTypes", ProductSaleType.values());
             return "admin/product-form";
         }
         productService.save(product);
+        log.info("Saved product {}", product.getName());
         return "redirect:/admin/products";
     }
 
@@ -71,6 +77,7 @@ public class ProductAdminController {
     @PostMapping("/delete/{id}")
     public String deleteProduct(@PathVariable Long id) {
         productService.deleteById(id);
+        log.warn("Deleted product with id {}", id);
         return "redirect:/admin/products";
     }
 }
