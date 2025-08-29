@@ -9,12 +9,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid; // Validasyon için ekledik
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindingResult;
 
 
 @Controller
 @RequestMapping("/admin/products")
 @PreAuthorize("hasRole('ADMIN')") // Bu sayfaya sadece ADMIN rolü olanların erişebilmesini sağlıyoruz
+@Slf4j
 public class ProductAdminController {
 
     private final ProductService productService;
@@ -27,6 +29,7 @@ public class ProductAdminController {
 
     @GetMapping
     public String listProducts(Model model) {
+        log.info("Listing all products");
         model.addAttribute("products", productService.findAll());
         return "admin/products";
     }
@@ -34,6 +37,7 @@ public class ProductAdminController {
     // YENİ: Yeni ürün ekleme formunu gösterir
     @GetMapping("/new")
     public String showNewProductForm(Model model) {
+        log.debug("Showing new product form");
         model.addAttribute("product", new Product());
         // Formdaki dropdown'lar için gerekli verileri modele ekliyoruz
         model.addAttribute("allCategories", categoryService.findAll());
@@ -44,6 +48,7 @@ public class ProductAdminController {
     // YENİ: Mevcut ürünü düzenleme formunu gösterir
     @GetMapping("/edit/{id}")
     public String showEditProductForm(@PathVariable Long id, Model model) {
+        log.debug("Editing product with id {}", id);
         Product product = productService.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Geçersiz Ürün Id:" + id));
         model.addAttribute("product", product);
@@ -64,6 +69,7 @@ public class ProductAdminController {
             return "admin/product-form";
         }
         productService.save(product);
+        log.info("Saved product {}", product.getName());
         return "redirect:/admin/products";
     }
 
@@ -71,6 +77,7 @@ public class ProductAdminController {
     @PostMapping("/delete/{id}")
     public String deleteProduct(@PathVariable Long id) {
         productService.deleteById(id);
+        log.warn("Deleted product with id {}", id);
         return "redirect:/admin/products";
     }
 }
